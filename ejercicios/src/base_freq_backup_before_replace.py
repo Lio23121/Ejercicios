@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# archivo: src/base_freq.py
+# Backup copy of the previous `base_freq.py` before replacing with cleaned version.
 
 import argparse
 import os
@@ -23,11 +23,12 @@ if not os.path.exists(ruta):
     print("Error: el archivo no existe:", ruta)
     sys.exit(1)
 
-# Intento leer el archivo completo
+# Intento leer el archivo completo (usar context manager)
 try:
-    contenido = open(ruta, "r", encoding="utf-8").read()
+    with open(ruta, "r", encoding="utf-8") as fh:
+        contenido = fh.read()
 except Exception as e:
-    print("Error al leer el archivo:", e)
+    print("Error al leer el archivo:", e, file=sys.stderr)
     sys.exit(1)
 
 # Verificar que parece FASTA
@@ -45,9 +46,9 @@ if len(partes) < 2:
     sys.exit(1)
 
 # Tomamos el primer bloque después del encabezado
-bloque = partes[1].strip().split("\n")
+bloque = partes[1].strip().splitlines()
 
-header = bloque[0]
+header = bloque[0] if len(bloque) > 0 else ""
 sec = "".join(bloque[1:]).strip().upper()
 
 if len(sec) == 0:
@@ -55,18 +56,27 @@ if len(sec) == 0:
     sys.exit(1)
 
 # Validar solo caracteres ATGC (ignorar guiones u otros)
-bases_validas = ["A", "T", "G", "C"]
-seq_limpia = ""
+bases_validas = {"A", "T", "G", "C"}
+seq_limpia_parts = []
+invalid_counts = {}
 
 for base in sec:
     if base in bases_validas:
-        seq_limpia += base
+        seq_limpia_parts.append(base)
     else:
-        print(f"Aviso: caracter inválido '{base}' ignorado en la secuencia '{header}'")
+        invalid_counts[base] = invalid_counts.get(base, 0) + 1
+
+seq_limpia = "".join(seq_limpia_parts)
 
 if len(seq_limpia) == 0:
-    print("Error: la secuencia no contiene bases válidas (A,T,G,C).")
+    print("Error: la secuencia no contiene bases válidas (A,T,G,C).", file=sys.stderr)
     sys.exit(1)
+
+# Si hubo caracteres inválidos, imprimimos un resumen conciso
+if invalid_counts:
+    total_invalid = sum(invalid_counts.values())
+    inv_summary = ", ".join([f"{v} x '{k}'" for k, v in sorted(invalid_counts.items(), key=lambda x: -x[1])])
+    print(f"Aviso: se ignoraron {total_invalid} caracteres inválidos: {inv_summary}", file=sys.stderr)
 
 # ---------------------------
 # CÁLCULO DE FRECUENCIAS (mezclado)

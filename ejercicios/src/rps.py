@@ -28,8 +28,20 @@ def determine_result(user: str, cpu: str) -> str:
     - "lose"
     - "draw"
     """
-    # TODO: implementar la lógica del juego
-    pass
+    if user == cpu:
+        return "draw"
+
+    # reglas: rock > scissors, scissors > paper, paper > rock
+    wins = {
+        "rock": "scissors",
+        "scissors": "paper",
+        "paper": "rock",
+    }
+
+    if wins.get(user) == cpu:
+        return "win"
+    else:
+        return "lose"
 
 
 def play(user_choice: str) -> tuple[str, str]:
@@ -43,11 +55,17 @@ def play(user_choice: str) -> tuple[str, str]:
     - Elegir opción aleatoria para la CPU
     - Llamar a determine_result()
     """
-    # TODO: Validar entrada
-    # TODO: Elegir para la CPU usando random.choice()
-    # TODO: Llamar determine_result()
-    # TODO: retornar tupla (cpu_choice, result)
-    pass
+    # Validar entrada
+    if user_choice not in VALID_CHOICES:
+        raise ValueError(f"Invalid choice: {user_choice}")
+
+    # Elección aleatoria de la CPU
+    cpu_choice = random.choice(VALID_CHOICES)
+
+    # Determinar resultado
+    result = determine_result(user_choice, cpu_choice)
+
+    return cpu_choice, result
 
 
 def main() -> None:
@@ -67,7 +85,30 @@ def main() -> None:
     print("-" * 40)
 
     # TODO: implementar ciclo del juego
-    pass
+    while True:
+        try:
+            user = input("Tu elección> ").strip().lower()
+        except (KeyboardInterrupt, EOFError):
+            print()
+            break
+
+        # salir si presiona ENTER sin escribir nada
+        if user == "":
+            print("Saliendo. ¡Hasta luego!")
+            break
+
+        if user not in VALID_CHOICES:
+            print(f"Entrada no válida: '{user}'. Elige rock, paper o scissors.")
+            continue
+
+        cpu_choice, result = play(user)
+
+        print(f"CPU: {cpu_choice}")
+        print(f"Resultado: {result}")
+
+        if result == "win":
+            print("¡Ganaste! 🎉✨🚀")
+
 
 
 if __name__ == "__main__":
